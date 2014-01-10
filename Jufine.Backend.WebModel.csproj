@@ -50,12 +50,10 @@
     <Reference Include="AjaxControlToolkit">
       <HintPath>..\ReffDll\AspAjax\AjaxControlToolkit.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.ComponentModel.DataAnnotations" />
-    <Reference Include="System.Data.Entity" />
-    <Reference Include="System.Web.DynamicData" />
-    <Reference Include="System.Web.Entity" />
-    <Reference Include="System.Web.ApplicationServices" />
+    <Reference Include="Com.BaseLibrary.Common, Version=4.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\ReffDll\Com.BaseLibrary\Com.BaseLibrary.Common.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Core" />
@@ -65,9 +63,6 @@
     <Reference Include="System.Drawing" />
     <Reference Include="System.Web" />
     <Reference Include="System.Xml" />
-    <Reference Include="System.Configuration" />
-    <Reference Include="System.Web.Services" />
-    <Reference Include="System.EnterpriseServices" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Themes\style\images\bg_nav.png" />
@@ -452,16 +447,6 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="MasterPage.master" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\BaseLibrary\Com.BaseLibrary.Common\Com.BaseLibrary.Common.csproj">
-      <Project>{F91D3D96-58F0-4CE6-9D7D-AD65805E3B97}</Project>
-      <Name>Com.BaseLibrary.Common</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\BaseLibrary\Com.BaseLibrary.Web\Com.BaseLibrary.Web.csproj">
-      <Project>{F20620BD-CD1F-4A7C-99A9-6D3D4B0A1A53}</Project>
-      <Name>Com.BaseLibrary.Web</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Resources\" />

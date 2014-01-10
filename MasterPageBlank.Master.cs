@@ -1,20 +1,6 @@
 ﻿using System;
-using System.Data;
-using System.Configuration;
-using System.Linq;
-using System.Collections;
-using System.Web;
-using System.Web.Security;
-using System.Web.UI;
-using System.Web.UI.HtmlControls;
-using System.Web.UI.WebControls;
-using System.Web.UI.WebControls.WebParts;
-using System.Xml.Linq;
 using System.Collections.Generic;
-using Com.BaseLibrary.Contract;
-using System.Text;
 using Com.BaseLibrary.Common.Security;
-using Com.BaseLibrary.Utility;
 
 namespace Jufine.Backend.WebModel
 {
