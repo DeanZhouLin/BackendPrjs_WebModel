@@ -1,0 +1,155 @@
+<%@ Master Language="C#" AutoEventWireup="True" Inherits="Jufine.Backend.WebModel.MasterPage" CodeBehind="MasterPage.master.cs" %>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head id="Head1" runat="server">
+    <title>后台管理系统</title>
+   
+    <link type="text/css" rel="stylesheet" href="~/MasterPageDir/Themes/style/global.css" />
+    <link type="text/css" rel="stylesheet" href="~/MasterPageDir/Javascripts/chosen/chosen.css" />
+    <%-- <link type="text/css" rel="stylesheet" href="~/MasterPageDir/Javascripts/easyUI/themes/default/easyui.css" />--%>
+    <style type="text/css">
+        #UpdateProgressAll
+        {
+            width: 100%;
+            background-color: #FFC080;
+            top: 0%;
+            left: 0px;
+            position: absolute;
+            z-index: 1000;
+        }
+    </style>
+    <asp:ContentPlaceHolder ID="head" runat="server">
+    </asp:ContentPlaceHolder>
+</head>
+<body>
+    <%-- <script src='<%=BuildStaticResourceUrl("Javascripts/jquery-ui-1.9.2.custom.min.css")%>' type="text/javascript"></script>--%>
+    <script src='<%=BuildStaticResourceUrl("Javascripts/comm.js")%>' type="text/javascript"></script>
+    <script src='<%=BuildStaticResourceUrl("Javascripts/jquery-1.7.2.min.js")%>' type="text/javascript"></script>
+    <script src='<%=BuildStaticResourceUrl("Javascripts/chosen/chosen.jquery.js")%>' type="text/javascript"></script>
+    <%--    <script src='<%=BuildStaticResourceUrl("Javascripts/easyUI/jquery.easyui.min.js")%>' type="text/javascript"></script>--%>
+    <%--<script src='<%=BuildStaticResourceUrl("Javascripts/jquery-ui-1.9.2.custom.min.css")%>' type="text/javascript"></script>--%>
+    <form id="form1" runat="server">
+    <asp:ToolkitScriptManager ID="ToolkitScriptManager1" EnableScriptGlobalization="true" EnableScriptLocalization="true" runat="server" 
+    AsyncPostBackTimeout="6000" >
+    </asp:ToolkitScriptManager>
+    <div class="page">
+        <div class="sitenav">
+            <div class="sitenav_link">
+                <div class="sitenav_link">
+                    <asp:PlaceHolder ID="phNonLogin" runat="server"><a href="<%=LoginUrl %>">登录</a> </asp:PlaceHolder>
+                    <asp:PlaceHolder ID="phHasLogin" runat="server">
+                     <asp:DropDownList  data-placeholder="请选择" ID="ddlUserMerchantList" DataValueField="MerchantID" DataTextField="MechantIDAndName" runat="server" AutoPostBack="true" OnSelectedIndexChanged="ddlUserMerchantList_SelectedIndexChanged">
+                        </asp:DropDownList>
+                        |
+                        <%=this.CurrentPage.CurrentUser.UserName%>
+                        | <a href="<%=LogoutUrl %>">退出</a> | <a href="<%=ModifyPassword %>">修改密码</a> </asp:PlaceHolder>
+                </div>
+            </div>
+        </div>
+        <div id="header">
+            <h1 id="logo">
+                <a href="<%=WebsiteUrl %>Welcome.aspx">
+                    <img src="/Security/MasterPageDir/Themes/style/images/logo.png" width="188px" alt="聚好" />
+                </a>
+            </h1>
+            <div id="nav">
+                <ul>
+                    <asp:Repeater ID="rptRootResource" runat="server">
+                        <ItemTemplate>
+                            <li class="<%#GetRootCss(Eval("ID") )%>">
+                                <div class="composetab_img">
+                                </div>
+                                <div class="<%#GetRootCss1(Eval("ID")) %>">
+                                    <div>
+                                        <asp:HyperLink ID="hlRe" CssClass="f_family" NavigateUrl='<%#Eval("ResourceAddress") %>' runat="server"><%#Eval("DisplayName") %></asp:HyperLink>
+                                    </div>
+                                </div>
+                            </li>
+                        </ItemTemplate>
+                    </asp:Repeater>
+                </ul>
+            </div>
+        </div>
+        <div id="container">
+            <table class="wrap01">
+                <tr>
+                    <td class="col_side">
+                        <ul class="productsort_nav">
+                            <asp:Repeater ID="rptNavigationResource" runat="server">
+                                <ItemTemplate>
+                                    <li class='<%#GetNavCss(Eval("ID") )%>'>
+                                        <asp:HyperLink ID="hlRe" NavigateUrl='<%#Eval("ResourceAddress") %>' runat="server"><%#Eval("DisplayName") %></asp:HyperLink></li>
+                                </ItemTemplate>
+                            </asp:Repeater>
+                        </ul>
+                    </td>
+                    <td class="col_main">
+                        <div class="main_wrap">
+                            <asp:ContentPlaceHolder ID="ContentPlaceHolder1" runat="server">
+                            </asp:ContentPlaceHolder>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div id="footer">
+            <p>
+                Jufine.com 版权所有
+            </p>
+        </div>
+    </div>
+    <script type="text/javascript" language="javascript">
+        ///document.getElementById("UpdateProgressAll").style.height = window.document.body.clientHeight;
+        (function () {
+
+            try {
+                function resizeSol() {
+                    var table_sol = $get("user_table_sol");
+                    if (table_sol == null) {
+                        return;
+                    }
+
+                    var isChrome = navigator.appVersion.indexOf("Chrome") > -1;
+                    var IE6 = (navigator.appVersion.indexOf('MSIE') != -1) && (parseFloat(navigator.appVersion.substr(navigator.appVersion.indexOf('MSIE') + 5, 3))) <= 6 ? true : false;
+                    var domW = document.documentElement.offsetWidth;
+                    var spaceW = (IE6 || isChrome) ? 250 : 230;
+
+                    var width = 600;
+                    if (domW - spaceW > 600) {
+                        width = domW - spaceW;
+                    }
+
+                    table_sol.style.width = width + 'px';
+                    //处理主容器高
+                    var warp_r = $get('warp_r');
+                    if (IE6) {
+                        container.style.width = table_sol.style.width;
+                        document.body.style.width = width + 230 + 'px';
+                    } else {
+                        warp_r.style.minHeight = document.documentElement.offsetHeight - 91 - 38 + 'px'
+                    }
+
+                }
+                window.onresize = resizeSol;
+                resizeSol();
+            }
+            catch (err)
+            { };
+        })();
+
+        function setchosen() {
+            $("select[data-placeholder]:not(:disabled)").chosen();
+        }
+        setchosen();
+        Sys.WebForms.PageRequestManager.getInstance().add_endRequest(
+            function (sender, e) {
+                //setchosen();
+                setchosen();
+            }
+            );
+     
+    </script>
+    </form>
+</body>
+</html>
