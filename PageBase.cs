@@ -757,8 +757,14 @@ namespace Jufine.Backend.WebModel
             PropertyInfo property = propertyList.Find(c => c.Name == propertyName);
             if (property != null)
             {
-                property.SetValue(obj,
-                    string.IsNullOrEmpty(value) ? null : StringUtil.ConvertToType(value, property.PropertyType), null);
+                if (string.IsNullOrEmpty(value))
+                {
+                    property.SetValue(obj, null, null);
+                }
+                else
+                {
+                    property.SetValue(obj, StringUtil.ConvertToType(value, property.PropertyType), null);
+                }
             }
         }
 
@@ -826,9 +832,13 @@ namespace Jufine.Backend.WebModel
         /// </summary>
         public List<Resource> PageControlResouceList
         {
-            get {
-                return m_PageControlResouceList ??
-                       (m_PageControlResouceList = CurrentUser.GetPageControlResouceList(CurrentResourcePage.ID));
+            get
+            {
+                if (m_PageControlResouceList == null)
+                {
+                    m_PageControlResouceList = CurrentUser.GetPageControlResouceList(CurrentResourcePage.ID);
+                }
+                return m_PageControlResouceList;
             }
         }
 
@@ -1095,15 +1105,17 @@ namespace Jufine.Backend.WebModel
 
         #region CommonMethods
 
-        protected virtual void CoreExecAction(Action mainDoAction, Action finallyDoAction = null, string successInfo = "", bool showExceptionMsg = true)
+        /// <summary>
+        /// 封装了Try 。。。 Catch 的通用操作
+        /// </summary>
+        /// <param name="mainDoAction"></param>
+        /// <param name="finallyDoAction"></param>
+        /// <param name="showExceptionMsg"></param>
+        protected virtual void CoreExecAction(Action mainDoAction, Action finallyDoAction = null, bool showExceptionMsg = true)
         {
             try
             {
                 mainDoAction();
-                if (!string.IsNullOrEmpty(successInfo))
-                {
-                    ShowMessageBox(successInfo);
-                }
             }
             catch (Exception ex)
             {
@@ -1128,12 +1140,14 @@ namespace Jufine.Backend.WebModel
             }
         }
 
-        protected virtual void ShowUpdateTitle(Label lblTitle, UpdatePanel upTitle, string title)
-        {
-            lblTitle.Text = title;
-            upTitle.Update();
-        }
-
+        /// <summary>
+        /// 封装了列表中的LinkButton的点击事件
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="clickAction"></param>
+        /// <param name="btnAttributes"></param>
+        /// <param name="otherParams"></param>
+        /// <returns></returns>
         protected virtual int CoreExecLnkBtnClick(object sender, Action<object[]> clickAction, List<string> btnAttributes = null, List<string> otherParams = null)
         {
             //获取需要的参数
@@ -1166,13 +1180,14 @@ namespace Jufine.Backend.WebModel
         }
 
         /// <summary>
-        /// 上一页
+        /// 
         /// </summary>
+        /// <param name="gv"></param>
         /// <param name="controlId"></param>
         /// <param name="showDetail"></param>
-        /// <param name="gv"></param>
         /// <param name="cRowIndex"></param>
         /// <param name="propName"></param>
+        /// <returns></returns>
         protected virtual int PreviousShowAction(GridView gv, string controlId, Action<object[]> showDetail, int cRowIndex, string propName = "CommandArgument")
         {
             if (cRowIndex <= 0) return cRowIndex;
@@ -1182,14 +1197,15 @@ namespace Jufine.Backend.WebModel
             return cRowIndex;
         }
 
-        ///  <summary>
-        /// 下一页
-        ///  </summary>
-        ///  <param name="controlId"></param>
-        ///  <param name="showDetail"></param>
-        ///  <param name="gv"></param>
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="gv"></param>
+        /// <param name="controlId"></param>
+        /// <param name="showDetail"></param>
         /// <param name="cRowIndex"></param>
         /// <param name="propName"></param>
+        /// <returns></returns>
         protected virtual int NextShowAction(GridView gv, string controlId, Action<object[]> showDetail, int cRowIndex, string propName = "CommandArgument")
         {
             if (cRowIndex >= gv.Rows.Count - 1) return cRowIndex;
@@ -1200,186 +1216,33 @@ namespace Jufine.Backend.WebModel
         }
 
         /// <summary>
-        /// 获取选择项
+        /// 封装改变弹出框表头显示文字的方法
         /// </summary>
-        /// <param name="gv"></param>
-        /// <param name="ckbName"></param>
+        /// <param name="lblTitle"></param>
+        /// <param name="upTitle"></param>
+        /// <param name="title"></param>
+        protected virtual void ShowUpdateTitle(Label lblTitle, UpdatePanel upTitle, string title)
+        {
+            lblTitle.Text = title;
+            upTitle.Update();
+
+            //前台对应代码
+            //<asp:UpdatePanel ID="upTitle" runat="server" UpdateMode="Conditional">
+            //   <ContentTemplate>
+            //      <asp:Label runat="server" ID="lblTiltle" Text="新增"></asp:Label>
+            //   </ContentTemplate>
+            //</asp:UpdatePanel>
+        }
+
+        /// <summary>
+        /// 判断传入值是否为null，返回String
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <param name="nullValue"></param>
         /// <returns></returns>
-        protected static List<int> GetGVCheckedRowList(GridView gv, string ckbName = "ckbSelect")
+        protected static string CommonIsNull(object obj, string nullValue = "")
         {
-            List<Int32> keyList = new List<Int32>();
-            foreach (GridViewRow row in gv.Rows)
-            {
-                if (row.RowType != DataControlRowType.DataRow)
-                {
-                    continue;
-                }
-                CheckBox ckbSelect = row.FindControl(ckbName) as CheckBox;
-                if (!ckbSelect.Checked || !ckbSelect.Visible) continue;
-                int key;
-                int.TryParse(ckbSelect.ToolTip, out key);
-                keyList.Add(key);
-            }
-            return keyList;
-        }
-
-        protected static void SelectAllChangedAction(GridView gv, bool isSelected, string ckbName = "ckbSelect")
-        {
-            foreach (GridViewRow row in gv.Rows)
-            {
-                if (row.RowType != DataControlRowType.DataRow)
-                {
-                    continue;
-                }
-                CheckBox ckbSelect = row.Cells[0].FindControl(ckbName) as CheckBox;
-                if (ckbSelect != null)
-                {
-                    ckbSelect.Checked = isSelected;
-                }
-            }
-        }
-
-        protected static void CommonBindDDL<T>(ListControl ddl, IEnumerable<T> list, bool flag = false, string defualtValue = "0", string defaultText = "请选择")
-        {
-            ddl.DataSource = list;
-            ddl.DataBind();
-            if (!flag) return;
-            ListItem item = new ListItem { Value = defualtValue, Text = defaultText };
-            ddl.Items.Insert(0, item);
-            ddl.SelectedIndex = 0;
-        }
-
-        protected static void CommonBindRBList<T>(RadioButtonList rbList, IEnumerable<T> list, bool flag = false, string defualtValue = "0", string defaultText = "请选择", string selectedValue = "")
-        {
-            rbList.DataSource = list;
-            rbList.DataBind();
-            if (!string.IsNullOrEmpty(selectedValue))
-            {
-                try
-                {
-                    rbList.SelectedValue = selectedValue;
-                }
-                catch (Exception)
-                {
-                }
-            }
-            if (!flag) return;
-            ListItem item = new ListItem { Value = defualtValue, Text = defaultText };
-            rbList.Items.Insert(0, item);
-            if (string.IsNullOrEmpty(selectedValue))
-            {
-                rbList.SelectedIndex = 0;
-            }
-        }
-
-        protected static void CommonBindRepeater<T>(Repeater repeater, IEnumerable<T> list) where T : class ,new()
-        {
-            repeater.DataSource = list;
-            repeater.DataBind();
-        }
-
-        protected static void CommonBindRepeater<T>(Repeater repeater, IEnumerable<T> list, bool flag, string defualtValue, string defaultText) where T : class ,new()
-        {
-            CommonBindRepeater(repeater, flag ? InsListByPropValues(list, defualtValue, defaultText, 0) : list);
-        }
-
-        protected static IEnumerable<T> InsListByPropValues<T>(IEnumerable<T> source, Dictionary<string, object> insPropValues, int insertIndex) where T : class ,new()
-        {
-            var temp = new List<T>(source.ToArray());
-            T t = new T();
-
-            Type thisType = typeof(T);
-
-            insPropValues = insPropValues ?? new Dictionary<string, object>();
-
-            foreach (var initPropValue in insPropValues)
-            {
-                var propName = initPropValue.Key;
-                var propValue = initPropValue.Value;
-                thisType.GetProperty(propName).SetValue(t, propValue, null);
-            }
-
-            temp.Insert(insertIndex, t);
-            return temp;
-        }
-
-        protected static IEnumerable<T> InsListByPropValues<T>(IEnumerable<T> source, string defualtValue, string defaultText, int insertIndex) where T : class, new()
-        {
-            Dictionary<string, object> dic = new Dictionary<string, object> { { "CodeText", defaultText }, { "CodeValue", defualtValue } };
-            return InsListByPropValues(source, dic, insertIndex);
-        }
-
-        protected static void CommonBindDDL(ListControl ddl, int start = 1, int end = 1, string bindValue = null)
-        {
-            ddl.Items.Clear();
-            for (int i = start; i <= end; i++)
-            {
-                ListItem item = new ListItem { Value = i.ToString(), Text = i.ToString() };
-                ddl.Items.Add(item);
-            }
-            ddl.DataBind();
-            if (bindValue != null && ddl.Items.FindByValue(bindValue) != null)
-            {
-                ddl.SelectedValue = bindValue;
-            }
-        }
-
-        protected static bool? GetBoolValueFromParamsObjects(object[] paramObjects, int valPos)
-        {
-            object t = GetValueFromParamsObjects(paramObjects, valPos);
-            if (t == null) return null;
-            bool temp;
-            bool.TryParse(t.ToString(), out temp);
-            return temp;
-        }
-
-        protected static int GetIntValueFromParamsObjects(object[] paramObjects, int valPos, int defaultValue = 0)
-        {
-            object t = GetValueFromParamsObjects(paramObjects, valPos);
-            if (t == null) return defaultValue;
-            int temp;
-            int.TryParse(t.ToString(), out temp);
-            return temp;
-        }
-
-        protected static object GetValueFromParamsObjects(object[] paramObjects, int valPos, object defaultValue = null)
-        {
-            object res = defaultValue;
-            if (paramObjects != null && paramObjects.Length >= valPos)
-            {
-                res = paramObjects[valPos - 1];
-            }
-            return res;
-        }
-
-        protected static T GetValueByPropName<T>(object source, string propName, out object resValue, object[] index = null) where T : class
-        {
-            resValue = GetValueByPropName(source, propName, index);
-            return source as T;
-        }
-
-        protected static object GetValueByPropName(object source, string propName, object[] index = null)
-        {
-            var temp = source.GetType().GetProperty(propName);
-            if (temp != null)
-            {
-                return temp.GetValue(source, index);
-            }
-            temp = source.GetType().GetProperty("Attributes");
-
-            if (temp == null) return null;
-
-            var res = temp.GetValue(source, null) as AttributeCollection;
-            return res[propName];
-        }
-
-        protected static double GetDateDiffValue(DateTime dateBegin, DateTime dateEnd)
-        {
-            TimeSpan ts1 = new TimeSpan(dateBegin.Ticks);
-            TimeSpan ts2 = new TimeSpan(dateEnd.Ticks);
-            TimeSpan ts3 = ts1.Subtract(ts2).Duration();
-            //你想转的格式
-            return ts3.TotalMinutes;
+            return obj == null ? nullValue : obj.ToString();
         }
 
         #region RepeaterExtension
@@ -1469,19 +1332,438 @@ namespace Jufine.Backend.WebModel
             }).Sum(c => int.Parse(c));
         }
 
+        protected static void CommonBindRepeater<T>(Repeater repeater, IEnumerable<T> list) where T : class ,new()
+        {
+            repeater.DataSource = list;
+            repeater.DataBind();
+        }
+
+        protected static void CommonBindRepeater<T>(Repeater repeater, IEnumerable<T> list, bool flag, string defualtValue, string defaultText) where T : class ,new()
+        {
+            CommonBindRepeater(repeater, flag ? InsListByPropValues(list, defualtValue, defaultText, 0) : list);
+        }
+
         #endregion
+
+        #region GridViewExtension
+
+        protected static List<int> GetGVCheckedRowList(GridView gv, string ckbName = "ckbSelect")
+        {
+            List<Int32> keyList = new List<Int32>();
+            foreach (GridViewRow row in gv.Rows)
+            {
+                if (row.RowType != DataControlRowType.DataRow)
+                {
+                    continue;
+                }
+                CheckBox ckbSelect = row.FindControl(ckbName) as CheckBox;
+                if (!ckbSelect.Checked || !ckbSelect.Visible) continue;
+                int key;
+                int.TryParse(ckbSelect.ToolTip, out key);
+                keyList.Add(key);
+            }
+            return keyList;
+        }
+
+        protected static void SelectAllChangedAction(GridView gv, bool isSelected, string ckbName = "ckbSelect")
+        {
+            foreach (GridViewRow row in gv.Rows)
+            {
+                if (row.RowType != DataControlRowType.DataRow)
+                {
+                    continue;
+                }
+                CheckBox ckbSelect = row.Cells[0].FindControl(ckbName) as CheckBox;
+                if (ckbSelect != null)
+                {
+                    ckbSelect.Checked = isSelected;
+                }
+            }
+        }
+
+        protected static void CkbSelectAllCheckedChangedInGridView(object sender, GridView holdGridView, UpdatePanel holdUpdatePanel, string ckbName = "ckbSelect")
+        {
+            CheckBox ckbSelectAll = sender as CheckBox;
+            foreach (GridViewRow row in holdGridView.Rows)
+            {
+                if (row.RowType != DataControlRowType.DataRow)
+                {
+                    continue;
+                }
+                CheckBox ckbSelect = row.Cells[0].FindControl(ckbName) as CheckBox;
+                if (ckbSelect != null)
+                {
+                    ckbSelect.Checked = ckbSelectAll.Checked;
+                }
+            }
+            holdUpdatePanel.Update();
+        }
+
+        #endregion
+
+        #region DDLExtension
+
+        protected static void CommonBindDDL(ListControl ddl, int start = 1, int end = 1, string bindValue = null)
+        {
+            ddl.Items.Clear();
+            for (int i = start; i <= end; i++)
+            {
+                ListItem item = new ListItem { Value = i.ToString(), Text = i.ToString() };
+                ddl.Items.Add(item);
+            }
+            ddl.DataBind();
+            if (bindValue != null && ddl.Items.FindByValue(bindValue) != null)
+            {
+                ddl.SelectedValue = bindValue;
+            }
+        }
+
+        protected static void CommonBindDDL<T>(ListControl ddl, IEnumerable<T> list, bool flag = false, string defualtValue = "0", string defaultText = "请选择")
+        {
+            ddl.DataSource = list;
+            ddl.DataBind();
+            if (!flag) return;
+            ListItem item = new ListItem { Value = defualtValue, Text = defaultText };
+            ddl.Items.Insert(0, item);
+            ddl.SelectedIndex = 0;
+        }
+
+        #endregion
+
+        #region RadionButtonListExtension
+
+        protected static void CommonBindRBList<T>(RadioButtonList rbList, IEnumerable<T> list, bool flag = false, string defualtValue = "0", string defaultText = "请选择", string selectedValue = "")
+        {
+            rbList.DataSource = list;
+            rbList.DataBind();
+            if (!string.IsNullOrEmpty(selectedValue))
+            {
+                try
+                {
+                    rbList.SelectedValue = selectedValue;
+                }
+                catch (Exception)
+                {
+                }
+            }
+            if (!flag) return;
+            ListItem item = new ListItem { Value = defualtValue, Text = defaultText };
+            rbList.Items.Insert(0, item);
+            if (string.IsNullOrEmpty(selectedValue))
+            {
+                rbList.SelectedIndex = 0;
+            }
+        }
+
+        #endregion
+
+        #region ParamsObjectsExtension
+
+        protected static bool? GetBoolValueFromParamsObjects(object[] paramObjects, int valPos)
+        {
+            object t = GetValueFromParamsObjects(paramObjects, valPos);
+            if (t == null) return null;
+            bool temp;
+            bool.TryParse(t.ToString(), out temp);
+            return temp;
+        }
+
+        protected static int GetIntValueFromParamsObjects(object[] paramObjects, int valPos, int defaultValue = 0)
+        {
+            object t = GetValueFromParamsObjects(paramObjects, valPos);
+            if (t == null) return defaultValue;
+            int temp;
+            int.TryParse(t.ToString(), out temp);
+            return temp;
+        }
+
+        protected static object GetValueFromParamsObjects(object[] paramObjects, int valPos, object defaultValue = null)
+        {
+            object res = defaultValue;
+            if (paramObjects != null && paramObjects.Length >= valPos)
+            {
+                res = paramObjects[valPos - 1];
+            }
+            return res;
+        }
+
+        #endregion
+
+        #region DateTimeExtension
+
+        protected static double GetDateDiffValue(DateTime dateBegin, DateTime dateEnd)
+        {
+            TimeSpan ts1 = new TimeSpan(dateBegin.Ticks);
+            TimeSpan ts2 = new TimeSpan(dateEnd.Ticks);
+            TimeSpan ts3 = ts1.Subtract(ts2).Duration();
+            //你想转的格式
+            return ts3.TotalMinutes;
+        }
 
         protected static string CommonFormatDateTime(object dateTime)
         {
             return dateTime == null ? "" : ((DateTime)dateTime).ToString("yyyy-MM-dd HH:mm:ss");
         }
 
-        protected static string CommonIsNull(object obj, string nullValue = "")
+        #endregion
+
+        #region GetValueByPropName
+
+        protected static T GetValueByPropName<T>(object source, string propName, out object resValue, object[] index = null) where T : class
         {
-            return obj == null ? nullValue : obj.ToString();
+            resValue = GetValueByPropName(source, propName, index);
+            return source as T;
+        }
+
+        protected static object GetValueByPropName(object source, string propName, object[] index = null)
+        {
+            var temp = source.GetType().GetProperty(propName);
+            if (temp != null)
+            {
+                return temp.GetValue(source, index);
+            }
+            temp = source.GetType().GetProperty("Attributes");
+
+            if (temp == null) return null;
+
+            var res = temp.GetValue(source, null) as AttributeCollection;
+            return res[propName];
         }
 
         #endregion
 
+        #region InsertIntoList
+
+        protected static IEnumerable<T> InsListByPropValues<T>(IEnumerable<T> source, Dictionary<string, object> insPropValues, int insertIndex) where T : class ,new()
+        {
+            var temp = new List<T>(source.ToArray());
+            T t = new T();
+
+            Type thisType = typeof(T);
+
+            insPropValues = insPropValues ?? new Dictionary<string, object>();
+
+            foreach (var initPropValue in insPropValues)
+            {
+                var propName = initPropValue.Key;
+                var propValue = initPropValue.Value;
+                thisType.GetProperty(propName).SetValue(t, propValue, null);
+            }
+
+            temp.Insert(insertIndex, t);
+            return temp;
+        }
+
+        protected static IEnumerable<T> InsListByPropValues<T>(IEnumerable<T> source, string defualtValue, string defaultText, int insertIndex) where T : class, new()
+        {
+            Dictionary<string, object> dic = new Dictionary<string, object> { { "CodeText", defaultText }, { "CodeValue", defualtValue } };
+            return InsListByPropValues(source, dic, insertIndex);
+        }
+
+        #endregion
+
+        #endregion
+
     }
+    public static class TreeViewHelper
+    {
+        /// <summary>
+        /// 刷新整个ResourceTree（用于显示更新数据数据后的效果）
+        /// </summary>
+        public static TreeNode RefreshTree<T>(this TreeView treeView, IEnumerable<T> totalResourceList, UpdatePanel updatePanel = null, int selectResourceID = -1,
+             string nValue = "ID",
+            string nParentID = "ParentID",
+            string nDisplayOrder = "DisplayOrder",
+            string nDisplayName = "DisplayName",
+            string nStatus = "Status") where T : DataContractBase
+        {
+
+            AddTreeNodes(treeView, totalResourceList, nValue: nValue, nParentID: nParentID, nDisplayName: nDisplayName, nDisplayOrder: nDisplayOrder, nStatus: nStatus);
+            TreeNode node = null;
+            if (selectResourceID > -1)
+            {
+                node = FindNodeByResourceId(treeView, selectResourceID);
+
+                if (node != null)
+                {
+                    node.Select();
+                    ExpandToNode(node);
+                }
+            }
+
+            if (updatePanel != null)
+            {
+                updatePanel.Update();
+            }
+            return node;
+        }
+
+        /// <summary>
+        /// 构建树结构
+        /// </summary>
+        /// <param name="parentTreeNode">父节点</param>
+        /// <param name="allResourceList"></param>
+        /// <param name="showDic"></param>
+        /// <param name="action"></param>
+        /// <param name="nValue"></param>
+        /// <param name="nParentID"></param>
+        /// <param name="nDisplayOrder"></param>
+        /// <param name="nDisplayName"></param>
+        /// <param name="nStatus"></param>
+        private static void AddTreeNodes<T>(
+            object parentTreeNode,
+            IEnumerable<T> allResourceList,
+            Dictionary<int, string> showDic = null,
+            TreeNodeSelectAction action = TreeNodeSelectAction.SelectExpand,
+            string nValue = "ID",
+            string nParentID = "ParentID",
+            string nDisplayOrder = "DisplayOrder",
+            string nDisplayName = "DisplayName",
+            string nStatus = "Status") where T : DataContractBase
+        {
+            int resourceId = 0;
+            TreeNodeCollection childNodes;
+
+            var treeNode = parentTreeNode as TreeNode;
+            if (treeNode != null)
+            {
+                resourceId = Convert.ToInt32(treeNode.Value);
+                childNodes = treeNode.ChildNodes;
+            }
+            else
+            {
+                var treeView = parentTreeNode as TreeView;
+                treeView.Nodes.Clear();
+                childNodes = treeView.Nodes;
+            }
+
+            if (showDic == null)
+            {
+                showDic = new Dictionary<int, string> { { 0, "（禁用）" } };
+            }
+
+            foreach (var resource in allResourceList.Where(c => Convert.ToInt32(c.GetValue(nParentID, -1)) == resourceId))
+            {
+                var value = resource.GetValue(nValue, "").ToString();
+                var name = resource.GetValue(nDisplayName);
+                var order = resource.GetValue(nDisplayOrder, "").ToString();
+                var status = Convert.ToInt32(resource.GetValue(nStatus, -1));
+                var displayText = order + "." + name + (showDic.ContainsKey(status) ? showDic[status] : "");
+
+                TreeNode node = new TreeNode
+                {
+                    Value = value,
+                    ToolTip = order,
+                    Text = displayText,
+                    SelectAction = action
+                };
+
+                AddTreeNodes(node, allResourceList, showDic, nValue: nValue, nParentID: nParentID, nDisplayName: nDisplayName, nDisplayOrder: nDisplayOrder, nStatus: nStatus);
+                childNodes.Add(node);
+            }
+        }
+
+        private static TreeNode FindNodeByResourceId(Object parentTreeNode, int currentResourceID)
+        {
+            var tv = parentTreeNode as TreeNode;
+            TreeNodeCollection childNodes = tv != null ? tv.ChildNodes : (parentTreeNode as TreeView).Nodes;
+
+            foreach (TreeNode treeNode in childNodes)
+            {
+                if (currentResourceID == Int32.Parse(treeNode.Value))
+                {
+                    return treeNode;
+                }
+                TreeNode findTreeNode = FindNodeByResourceId(treeNode, currentResourceID);
+                if (findTreeNode != null)
+                {
+                    return findTreeNode;
+                }
+            }
+            return null;
+        }
+
+        private static void SetParentNode(TreeNode node)
+        {
+            while (true)
+            {
+                if (node.Parent != null)
+                {
+                    node.Parent.Checked = true;
+                    node = node.Parent;
+                    continue;
+                }
+                break;
+            }
+        }
+
+        private static void SetSelectNode(TreeNodeCollection tnc, bool select)
+        {
+            if (tnc == null || tnc.Count <= 0) return;
+            foreach (TreeNode node in tnc)
+            {
+                node.Checked = @select;
+                SetSelectNode(node.ChildNodes, @select);
+            }
+        }
+
+        private static void SetSelectInverseNode(TreeNodeCollection tnc)
+        {
+            if (tnc == null || tnc.Count <= 0) return;
+            foreach (TreeNode node in tnc)
+            {
+                node.Checked = !node.Checked;
+                SetSelectInverseNode(node.ChildNodes);
+            }
+        }
+
+        private static void ExpandToNode(TreeNode node)
+        {
+            while (true)
+            {
+                if (node.Parent != null)
+                {
+                    node.Parent.Expand();
+                    node = node.Parent;
+                    continue;
+                }
+                break;
+            }
+        }
+
+
+        public static void CollapseAllTreeNode(this TreeView treeView)
+        {
+            foreach (TreeNode node in treeView.Nodes)
+            {
+                node.CollapseAll();
+            }
+        }
+
+        public static TreeNode SelectTreeNodeByNodeValue(this TreeNodeCollection tnc, string id)
+        {
+            if (tnc == null)
+            {
+                return null;
+            }
+
+            foreach (TreeNode node in tnc)
+            {
+                if (node.Value == id)
+                {
+                    node.Select();
+                    ExpandToNode(node);
+                    return node;
+                }
+                TreeNode findNode = SelectTreeNodeByNodeValue(node.ChildNodes, id);
+                if (findNode != null)
+                {
+                    return findNode;
+                }
+            }
+            return null;
+        }
+
+    }
+
 }
